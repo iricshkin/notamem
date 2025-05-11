@@ -1,0 +1,51 @@
+default_stages:
+  - pre-commit
+
+default_language_version:
+  python: python3.13
+
+exclude: /migration/
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: trailing-whitespace
+        stages:
+          - pre-commit
+      - id: double-quote-string-fixer
+        stages:
+          - pre-commit
+      - id: end-of-file-fixer
+        exclude: \.svg$
+        stages:
+          - pre-commit
+      - id: detect-private-key
+        stages:
+          - pre-commit
+      - id: check-ast
+        stages:
+          - pre-commit
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.9.0
+    hooks:
+      - id: python-check-blanket-noqa
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.3
+    hooks:
+      - id: uv-lock
+      - id: uv-export
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.8
+    hooks:
+      - id: ruff
+        args: [--fix, --show-fixes]
+      # - id: ruff-format
+
+  - repo: https://github.com/MarcoGorelli/absolufy-imports
+    rev: v0.3.0
+    hooks:
+      - id: absolufy-imports

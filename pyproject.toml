@@ -1,0 +1,22 @@
+[project]
+name = "notamem"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13.3"
+dependencies = [
+    "advanced-alchemy>=1.4.2",
+    "asyncpg>=0.30.0",
+    "litestar-asyncpg>=0.3.0",
+    "litestar>=2.16.0",
+    "msgspec>=0.19.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "sqlalchemy[asyncio]>=2.0.40",
+    "uvicorn>=0.34.2",
+    "alembic>=1.15.2",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
