@@ -8,6 +8,12 @@ from litestar.pagination import OffsetPagination
 from litestar.plugins.sqlalchemy import filters, repository
 from uuid import UUID
 
+__all__ = (
+    'UserController',
+    'UsersRepository',
+    'provide_users_repo',
+)
+
 
 class UsersRepository(repository.SQLAlchemyAsyncRepository[User]):
     """Author repository."""

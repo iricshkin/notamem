@@ -4,7 +4,7 @@ default_stages:
 default_language_version:
   python: python3.13
 
-exclude: /migration/
+exclude: /postgres/migrations/
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

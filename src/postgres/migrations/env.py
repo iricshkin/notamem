@@ -14,13 +14,13 @@ from litestar.plugins.sqlalchemy import base
 # access to the values within the .ini file in use.
 config = context.config
 config_file = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../..', 'configs', 'alembic.ini')
+    os.path.join(os.path.dirname(__file__), "../..", "configs", "alembic.ini")
 )
 fileConfig(config_file)
 
-models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'models'))
+models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
 for filename in os.listdir(models_dir):
-    if filename.endswith('.py') and filename not in ['__init__.py', 'base.py']:
+    if filename.endswith(".py") and filename not in ["__init__.py", "base.py"]:
         module_name = f"src.postgres.models.{filename[:-3]}"
         importlib.import_module(module_name)
 
@@ -48,12 +48,12 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option('sqlalchemy.url')
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={'paramstyle': 'named'},
+        dialect_opts={"paramstyle": "named"},
     )
 
     with context.begin_transaction():
@@ -75,7 +75,7 @@ async def run_async_migrations() -> None:
 
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
-        prefix='sqlalchemy.',
+        prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
