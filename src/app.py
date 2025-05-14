@@ -9,8 +9,10 @@ from litestar.params import Parameter
 from litestar.plugins.sqlalchemy import filters, base, SQLAlchemySerializationPlugin
 from litestar.openapi import OpenAPIConfig
 from litestar.openapi.plugins import SwaggerRenderPlugin
+from litestar.logging import LoggingConfig
 
 from src.controllers.users import UserController
+from src.configs.app_config import configure
 
 __all__ = (
     'on_startup',
@@ -18,7 +20,15 @@ __all__ = (
 )
 
 
-DATABASE_URL = 'postgresql+asyncpg://postgres:postgres@localhost/notamem'
+config = configure()
+
+logging_config = LoggingConfig(
+    root={'level': 'INFO', 'handlers': ['queue_listener']},
+    formatters={
+        'standart': {'format': '%(asxtime)s - %(name)s - %(levelname)s - %(message)s'}
+    },
+    log_exceptions='always',
+)
 
 
 async def provide_limit_offset_pagination(
@@ -49,7 +59,7 @@ async def provide_limit_offset_pagination(
 
 session_config = AsyncSessionConfig(expire_on_commit=False)
 db_config = SQLAlchemyAsyncConfig(
-    connection_string=DATABASE_URL,
+    connection_string=config.database.get_connection_url(),
     before_send_handler='autocommit',
     session_config=session_config,
 )
@@ -65,6 +75,7 @@ sqlalchemy_plugin = SQLAlchemyInitPlugin(config=db_config)
 
 app = Litestar(
     route_handlers=[UserController],
+    logging_config=logging_config,
     on_startup=[on_startup],
     openapi_config=OpenAPIConfig(
         title='NotaMem',

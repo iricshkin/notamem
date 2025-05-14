@@ -21,17 +21,20 @@ class Reminder(base.UUIDAuditBase):
     is_send: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
+    # from src.postgres.models.users import User
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey('users.id', ondelete='CASCADE'), index=True
     )
-    user: Mapped['User'] = relationship(back_populates='reminders')
+    user: Mapped['User'] = relationship('User', back_populates='reminders')
 
+    # from src.postgres.models.tasks import Task
     task_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey('tasks.id', ondelete='CASCADE')
+        ForeignKey('tasks.id', ondelete='CASCADE'), index=True
     )
-    task: Mapped[Optional['Task']] = relationship(back_populates='reminders')
+    task: Mapped[Optional['Task']] = relationship('Task', back_populates='reminders')
 
+    # from src.postgres.models.notes import Note
     note_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey('notes.id', ondelete='CASCADE')
+        ForeignKey('notes.id', ondelete='CASCADE'), index=True
     )
-    note: Mapped[Optional['Note']] = relationship(back_populates='reminders')
+    note: Mapped[Optional['Note']] = relationship('Note', back_populates='reminders')

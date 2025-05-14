@@ -22,6 +22,6 @@ class User(base.UUIDAuditBase):
     )
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
-    tasks: Mapped[List['Task']] = relationship(back_populates='user')
-    notes: Mapped[List['Note']] = relationship(back_populates='user')
-    reminders: Mapped[List['Reminder']] = relationship(back_populates='user')
+    tasks: Mapped[List['Task']] = relationship('Task', back_populates='user')
+    notes: Mapped[List['Note']] = relationship('Note', back_populates='user')
+    reminders: Mapped[List['Reminder']] = relationship('Reminder', back_populates='user')

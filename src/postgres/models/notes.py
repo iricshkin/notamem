@@ -23,7 +23,7 @@ class Note(base.UUIDAuditBase):
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey('users.id', ondelete='CASCADE'), index=True
     )
-    user: Mapped['User'] = relationship(back_populates='notes')
+    user: Mapped['User'] = relationship('User', back_populates='notes')
 
-    tasks: Mapped[List['Task']] = relationship(back_populates='note')
-    reminders: Mapped[List['Reminder']] = relationship(back_populates='note')
+    tasks: Mapped[List['Task']] = relationship('Task', back_populates='note')
+    reminders: Mapped[List['Reminder']] = relationship('Reminder', back_populates='note')
