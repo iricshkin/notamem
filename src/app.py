@@ -1,3 +1,4 @@
+from advanced_alchemy.exceptions import IntegrityError
 from litestar import Litestar
 from litestar.di import Provide
 from litestar.contrib.sqlalchemy.plugins import (
@@ -5,14 +6,21 @@ from litestar.contrib.sqlalchemy.plugins import (
     SQLAlchemyAsyncConfig,
     SQLAlchemyInitPlugin,
 )
+from litestar.connection import ASGIConnection
+from litestar.exceptions import ClientException
+from litestar.status_codes import HTTP_409_CONFLICT
 from litestar.params import Parameter
 from litestar.plugins.sqlalchemy import filters, base, SQLAlchemySerializationPlugin
 from litestar.openapi import OpenAPIConfig
 from litestar.openapi.plugins import SwaggerRenderPlugin
 from litestar.logging import LoggingConfig
+from litestar.security.jwt import JWTAuth, Token
+from uuid import UUID
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.controllers.users import UserController
+from src.controllers.users import UserController, provide_users_repo
 from src.configs.app_config import configure
+from src.postgres.models.users import User
 
 __all__ = (
     'on_startup',
@@ -56,6 +64,39 @@ async def provide_limit_offset_pagination(
     """
     return filters.LimitOffset(page_size, page_size * (current_page - 1))
 
+
+sessionmaker = async_sessionmaker(expire_on_commit=False)
+
+
+async def retrieve_user_handler(
+    token: Token,
+    connection: ASGIConnection,
+) -> User | None:
+    user_id = UUID(token.sub)
+    users_repo = connection.scope.get('users_repo')
+    if not users_repo:
+        async with sessionmaker(bind=db_config.get_engine()) as session:
+            try:
+                async with session.begin():
+                    users_repo = await provide_users_repo(db_session=session)
+            except IntegrityError as exc:
+                raise ClientException(
+                    status_code=HTTP_409_CONFLICT,
+                    detail=str(exc),
+                ) from exc
+    user = await users_repo.get(user_id)
+    return user
+
+
+jwt_auth = JWTAuth[User](
+    retrieve_user_handler=retrieve_user_handler,
+    token_secret=config.jwt.token_secret,
+    algorithm='HS256',
+    exclude=[
+        '/users/login',
+        '/schema',
+    ],
+)
 
 session_config = AsyncSessionConfig(expire_on_commit=False)
 db_config = SQLAlchemyAsyncConfig(
