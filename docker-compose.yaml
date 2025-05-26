@@ -1,16 +1,51 @@
 services:
-  postgres:
-    image: postgres
-    container_name: postgres
-    hostname: postgres
+  app:
+    build: .
     ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: notamem_test_db
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keydb:
+        condition: service_healthy
+    networks:
+      - notamem
+  postgres:
+    image: postgres:latest
+    container_name: postgres-nm
+    hostname: postgres-nm
+    ports:
+      - 5436:5432
     volumes:
       - "postgres-data:/var/lib/postgresql/data"
+    networks:
+      - notamem
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  keydb:
+    image: eqalpha/keydb:latest
+    container_name: keydb
+    ports:
+      - "6380:6379"
+    volumes:
+      - keydb-data:/data
+    restart: unless-stopped
+    networks:
+      - notamem
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  notamem:
+    driver: bridge
 
 volumes:
   postgres-data:
+  keydb-data:
+    driver: local

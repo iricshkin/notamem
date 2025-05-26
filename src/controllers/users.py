@@ -4,8 +4,9 @@ from litestar.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.users import UserCreate, UserPatch, UserLogin, UserRead
 from src.postgres.models.users import User
+from src.client.cache import keydb
 from src import app
-from msgspec import structs, to_builtins
+from msgspec import json, structs, to_builtins
 from litestar.pagination import OffsetPagination
 from litestar.plugins.sqlalchemy import filters, repository
 from uuid import UUID
@@ -41,10 +42,10 @@ class UserController(Controller):
         self,
         users_repo: UsersRepository,
         limit_offset: filters.LimitOffset,
-    ) -> OffsetPagination[User]:
+    ) -> OffsetPagination[UserRead]:
         """List users."""
         results, total = await users_repo.list_and_count(limit_offset)
-        return OffsetPagination[User](
+        return OffsetPagination[UserRead](
             items=results,
             total=total,
             limit=limit_offset.limit,
@@ -59,12 +60,12 @@ class UserController(Controller):
     ) -> dict:
         user = await users_repo.get_one_or_none(username=data.username)
         if not user or not pwd_context.verify(data.password, user.hashed_password):
-            raise HTTPException(status_code=401, detail='Неверный username или пароль')
+            raise HTTPException(status_code=401, detail='Invalid credentials')
         token = app.jwt_auth.create_token(identifier=str(user.id))
         return {'access_token': token, 'token_type': 'bearer'}
 
     @post('/', return_dto=MsgspecDTO[UserRead])
-    async def create_user(self, data: UserCreate, users_repo: UsersRepository) -> User:
+    async def create_user(self, data: UserCreate, users_repo: UsersRepository) -> UserRead:
         """Create new user."""
         user_data = structs.asdict(data)
         password = user_data.pop('password', None)
@@ -75,15 +76,20 @@ class UserController(Controller):
         return user
 
     @get('/{user_id:uuid}', return_dto=MsgspecDTO[UserRead])
-    async def get_user(self, user_id: UUID, users_repo: UsersRepository) -> User:
+    async def get_user(self, user_id: UUID, users_repo: UsersRepository) -> UserRead:
         """Get user."""
+        cache_key = f'user:{user_id}'
+        cached = await keydb.get(cache_key)
+        if cached:
+            return json.decode(cached, type=UserRead)
         user = await users_repo.get(user_id)
+        await keydb.set(cache_key, json.encode(user.to_dict()), ex=3600)
         return user
 
     @patch('/{user_id:uuid}',  return_dto=MsgspecDTO[UserRead])
     async def update_user(
         self, user_id: UUID, data: UserPatch, users_repo: UsersRepository
-    ) -> User:
+    ) -> UserRead:
         """Update user."""
         raw_obj = to_builtins(data)
         raw_obj['id'] = user_id

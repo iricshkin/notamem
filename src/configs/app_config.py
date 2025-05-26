@@ -23,7 +23,7 @@ class DatabaseConfig(Struct):
 
 class KeyDBConfig(Struct):
     host: str = '127.0.0.1'
-    port: str = '6379'
+    port: str = '6380'
     db: str = '0'
     url: str | None = None
 
